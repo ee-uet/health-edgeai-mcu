@@ -1,0 +1,138 @@
+Psuedo format for the CGRA assembly code of the following C loop:   
+
+    for (i = 1; i < (N - 2); i++) {
+        smoothed[i] = (denoised[i - 1] + denoised[i] + denoised[i + 1] + denoised[i + 2]) << 2;
+    }
+
+This gives us a good way to visualize CGRA execution.
+It will also be used to select the load addresses for behavioral simulation.
+
+Assume that addresses provided to the columns are
+
+z1	| z2  | z3	| z4
+
+--------------------
+
+
+0 {
+	a1 (r0) = z1[0];
+	a3 (r0) = z1[1];
+	b1 (r1) = z2[0];
+	b3 (r0) = z2[1];
+	c1 (r0) = z3[0];
+	c3 (r0) = z3[1];
+	d1 = 1;
+}
+
+1 {
+	d4 = 1;
+}
+
+2 {
+	a4 = 0;
+	d1 = 2;
+}
+
+3 {
+	a1 = 8;
+	a3 = 0;
+	d3 = 4;
+}
+
+4 {
+	a1 = z1[0]+8;
+	a3 = z1[1]+4;
+	b3 = z2[1];
+	c4 = 4;
+	d1 = 3;
+	d4 = 2;
+}
+
+5 {
+	a1 = 12;
+	a4 = 1;
+	b1 (r0) = *(z1[0]+8);
+	b3 = *(z1[1]+4);
+	b4 = *(z2[1]);
+	d1 = 3;
+}
+
+6 {
+	a1 = 12;
+	a3 = 4;
+	b1 = z2[0]+12;
+	b4 = *(z1[1]+4) + *(z2[1]);
+	d3 = 8;
+}
+
+7 {
+	a1 = z1[0]+12;
+	a3 = z1[1]+8;
+	b1 = *(z1[0]+8) + *(z1[1]+4) + *(z2[1]);
+	b2 = *(z2[0]+12);
+	b3 = z2[1]+4;
+	c3 = z3[1]+4;
+	c4 = 8;
+	d1 = 4;
+	d4 = 3;
+}
+
+8 {
+	a1 = 16;
+	a4 = 2;
+	b1 (r0) = *(z1[0]+12);
+	b2 = *(z1[0]+8) + *(z1[1]+4) + *(z2[1]) + *(z2[0]+12);
+	b3 = *(z1[1]+8);
+	b4 = *(z2[1]+4);
+	d1 = 4;
+}
+
+9 {
+	a1 = 16;
+	a3 = 8;
+	b1 = z2[0]+16;
+	b2 = (*(z1[0]+8) + *(z1[1]+4) + *(z2[1]) + *(z2[0]+12)) / 4;
+	b4 = *(z1[1]+8) + *(z2[1]+4);
+	d3 = 12;
+}
+
+10 {
+	a1 = z1[0]+16;
+	a3 = z1[1]+12;
+	b1 = *(z1[1]+8) + *(z2[1]+4) + *(z1[0]+12);
+	b2 = *(z2[0]+16);
+	b3 = z2[1]+8;
+	store (*(z1[0]+8) + *(z1[1]+4) + *(z2[1]) + *(z2[0]+12)) / 4 at address z3[1]+4
+	c3 = z3[1]+8;
+	c4 = 12;
+	d1 = 5;
+	d4 = 4;
+}
+
+11 {
+	a1 = 20;
+	a4 = 3;
+	b1 (r0) = *(z1[0]+16);
+	b2 = *(z1[1]+8) + *(z2[1]+4) + *(z1[0]+12) + *(z2[0]+16);
+	b3 = *(z1[1]+12);
+	b4 = *(z2[1]+8);
+	d1 = 5;
+}
+
+12 {
+	a1 = 20;
+	a3 = 12;
+	b1 = z2[0]+20;
+	b2 = (*(z1[1]+8) + *(z2[1]+4) + *(z1[0]+12) + *(z2[0]+16)) / 4;
+	b4 = *(z1[1]+12) + *(z2[1]+8);
+	if (d1 != z3[0]) go to instruction 10
+	d3 = 16;
+}	
+
+
+From this we can conclude that
+N = z3[0]
+smoothed = z3[1]
+denoised = z1[0] = z1[1] = z2[0] = z2[1]
+
+Now we can select addresses accordingly

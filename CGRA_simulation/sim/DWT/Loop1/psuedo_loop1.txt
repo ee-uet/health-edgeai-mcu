@@ -1,0 +1,106 @@
+Psuedo format for the CGRA assembly code of the following C loop:   
+
+for (i = 0; i < N1; i++) {
+    k = 2 * i;
+    A1[i] = filter[0] * ecg[k] + filter[1] * ecg[k + 1];
+    D1[i] = filter[2] * ecg[k] + filter[3] * ecg[k + 1];
+}
+
+This gives us a good way to visualize CGRA execution.
+It will also be used to select the load addresses for behavioral simulation.
+
+Assume that addresses provided to the columns are
+
+z1	| z2  | z3	| z4
+
+--------------------
+
+0 {
+	a1 (r0) = z1[0];
+	a2 = 0;
+	b1 (r0) = z2[0];
+	b2 (r0) = z2[1];
+	b3 (r0) = z2[2];
+	c1 (r0) = z3[0];
+	c3 (r0) = z3[1];
+	d2 (r0) = z4[0];
+	d4 (r0) = z4[1];
+}
+
+1 {
+	a3 = 0;
+	b2 = *z2[1];
+}
+
+2 {
+	a2 = 1;
+	d3 = 0;
+}
+
+3 {
+	b3 = *z2[2];
+	c3 = 0;
+	d4 = 1;
+}
+
+4 {
+	a3 = 1;
+	a4 = 0;
+	b1 = *z2[0];
+	b2 = *z2[1];
+	c3 = z3[1];
+	d4 = 4;
+}
+
+5 {
+	a2 = 2;
+	c4 = *z3[1];
+	d3 = 2;
+	d4 = z4[1]+4;
+}
+
+6 {
+	a1 = z1[0];
+	b3 = *z2[2];
+	b4 = (*z3[1]) * (*z2[2]);
+	c1 = *z3[0];
+	c3 = 8;
+	c4 = *(z4[1]+4);
+	d4 = 3;
+}
+
+7 {
+	a3 = 2;
+	a4 = 4;
+	b1 = *z2[0];
+	b2 = *z2[1];
+	c3 = z3[1]+8;
+	c4 = *(z4[1]+4) * (*z3[0]);
+	d4 = 12;
+}
+
+8 {
+	a2 = 3;
+	b4 = (*z3[1]) * (*z2[2]) + *(z4[1]+4) * (*z3[0]);
+	c4 = *(z3[1]+8);
+	d3 = 4;
+	d4 = z4[1]+12;
+}
+
+9 {
+	a1 = z1[0]+4;
+	store (*z3[1]) * (*z2[2]) + *(z4[1]+4) * (*z3[0]) at z1[0]
+	b3 = *z2[2];
+	b4 = *(z3[1]+8) * (*z2[2]);
+	if (d1 != z4[0]) branch back to instruction 7
+}
+
+
+From this we can conclude that
+N1 = z4[0]
+ecg = z3[1] = z4[1]
+h0 = *z2[2]
+h1 = *z3[0]
+A1 = z1[0];
+
+Now we can select addresses accordingly
